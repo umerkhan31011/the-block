@@ -31,6 +31,7 @@ A buyer should be able to browse inventory, inspect vehicle details, and place b
 - This is a prototype, not a production launch.
 - Target roughly **4-8 hours** of work. If you spend more, that's your call, but we do not expect a fully built marketplace.
 - Use any framework, language, or stack.
+- You may use AI tools and coding assistants. Be ready to explain how you used them, what decisions you made, and what parts of the implementation you would refine.
 - Authentication and user accounts are **not required**.
 - A backend is **optional**. In-memory state, local persistence, or a mocked API is fine if you explain your choice.
 - You do **not** need to build seller workflows, checkout, payments, or dealer admin tooling.
