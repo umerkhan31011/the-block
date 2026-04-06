@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Filters } from '../hooks/useVehicles'
+import { useCurrency } from '../context/CurrencyContext'
 
 interface FilterPanelProps {
   filters: Filters
@@ -79,6 +80,7 @@ export function FilterPanel({
   uniqueTransmissions,
   resultCount,
 }: FilterPanelProps) {
+  const { currency } = useCurrency()
   const hasActiveFilters =
     filters.makes.length > 0 ||
     filters.bodyStyles.length > 0 ||
@@ -88,7 +90,8 @@ export function FilterPanel({
     filters.minPrice !== null ||
     filters.maxPrice !== null ||
     filters.minYear !== null ||
-    filters.maxYear !== null
+    filters.maxYear !== null ||
+    filters.listingType !== 'all'
 
   return (
     <aside className="flex flex-col gap-4">
@@ -106,6 +109,19 @@ export function FilterPanel({
       <p className="text-xs text-gray-400 -mt-2">
         {resultCount} vehicle{resultCount !== 1 ? 's' : ''} found
       </p>
+
+      <FilterSection title="Listing Type">
+        <div className="flex flex-wrap gap-1.5">
+          {(['all', 'buy-now', 'auction-only'] as const).map((lt) => (
+            <ChipToggle
+              key={lt}
+              label={lt === 'all' ? 'All' : lt === 'buy-now' ? 'Buy Now' : 'Auction Only'}
+              selected={filters.listingType === lt}
+              onToggle={() => updateFilters({ listingType: lt })}
+            />
+          ))}
+        </div>
+      </FilterSection>
 
       <FilterSection title="Make">
         <div className="flex flex-wrap gap-1.5">
@@ -200,7 +216,7 @@ export function FilterPanel({
         </div>
       </FilterSection>
 
-      <FilterSection title="Price (CAD)">
+      <FilterSection title={`Price (${currency})`}>
         <div className="flex gap-2 items-center">
           <input
             type="number"

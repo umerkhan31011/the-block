@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import type { Vehicle } from '../types/vehicle'
+import { normalizeAuctionTime } from '../lib/format'
+import { useCurrency } from '../context/CurrencyContext'
 import vehiclesData from '../data/vehicles.json'
 
 const ALL_VEHICLES = vehiclesData as Vehicle[]
@@ -10,6 +12,8 @@ export type SortOption =
   | 'year-desc'
   | 'year-asc'
   | 'mileage-asc'
+  | 'auction-asc'
+  | 'auction-desc'
 
 export interface Filters {
   search: string
@@ -22,6 +26,7 @@ export interface Filters {
   maxPrice: number | null
   minYear: number | null
   maxYear: number | null
+  listingType: 'all' | 'buy-now' | 'auction-only'
 }
 
 export const DEFAULT_FILTERS: Filters = {
@@ -35,6 +40,7 @@ export const DEFAULT_FILTERS: Filters = {
   maxPrice: null,
   minYear: null,
   maxYear: null,
+  listingType: 'all',
 }
 
 const PAGE_SIZE = 20
@@ -84,6 +90,11 @@ export function filterVehicles(vehicles: Vehicle[], filters: Filters): Vehicle[]
     result = result.filter((v) => v.year <= maxY)
   }
 
+  if (filters.listingType === 'buy-now')
+    result = result.filter((v) => v.buy_now_price !== null)
+  else if (filters.listingType === 'auction-only')
+    result = result.filter((v) => v.buy_now_price === null)
+
   return result
 }
 
@@ -105,6 +116,26 @@ export function sortVehicles(vehicles: Vehicle[], sort: SortOption): Vehicle[] {
     case 'mileage-asc':
       arr.sort((a, b) => a.odometer_km - b.odometer_km)
       break
+    case 'auction-asc':
+    case 'auction-desc': {
+      const desc = sort === 'auction-desc'
+      arr.sort((a, b) => {
+        const aEnd = normalizeAuctionTime(a.auction_start).getTime() + 3 * 3_600_000
+        const bEnd = normalizeAuctionTime(b.auction_start).getTime() + 3 * 3_600_000
+        const now = Date.now()
+        const aStart = normalizeAuctionTime(a.auction_start).getTime()
+        const bStart = normalizeAuctionTime(b.auction_start).getTime()
+        const aLive = aStart <= now && now <= aEnd
+        const bLive = bStart <= now && now <= bEnd
+        const aUpcoming = aStart > now
+        const bUpcoming = bStart > now
+        const aRank = aLive ? 0 : aUpcoming ? 1 : 2
+        const bRank = bLive ? 0 : bUpcoming ? 1 : 2
+        if (aRank !== bRank) return aRank - bRank
+        return desc ? bEnd - aEnd : aEnd - bEnd
+      })
+      break
+    }
   }
   return arr
 }
@@ -113,8 +144,26 @@ export function useVehicles() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [sort, setSort] = useState<SortOption>('price-asc')
   const [page, setPage] = useState(1)
+  const { toCAD, currency } = useCurrency()
 
-  const filtered = useMemo(() => filterVehicles(ALL_VEHICLES, filters), [filters])
+  // Clear price filters when currency changes so stale values don't misfilter
+  const [prevCurrency, setPrevCurrency] = useState(currency)
+  useEffect(() => {
+    if (currency !== prevCurrency) {
+      setPrevCurrency(currency)
+      setFilters((prev) => ({ ...prev, minPrice: null, maxPrice: null }))
+    }
+  }, [currency, prevCurrency])
+
+  const filtered = useMemo(() => {
+    // Convert user-entered prices (in display currency) to CAD for filtering
+    const cadFilters = {
+      ...filters,
+      minPrice: filters.minPrice !== null ? toCAD(filters.minPrice) : null,
+      maxPrice: filters.maxPrice !== null ? toCAD(filters.maxPrice) : null,
+    }
+    return filterVehicles(ALL_VEHICLES, cadFilters)
+  }, [filters, toCAD])
 
   const sorted = useMemo(() => sortVehicles(filtered, sort), [filtered, sort])
 

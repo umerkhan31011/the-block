@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react'
-import { getAuctionStatus } from '../lib/format'
+import { getAuctionStatus, normalizeAuctionTime } from '../lib/format'
 
 interface Props {
   auctionStart: string
 }
 
 function getRemainingSeconds(auctionStart: string): number {
-  const start = new Date(auctionStart)
-  const now = new Date()
-  const normalizedStart = new Date(now)
-  normalizedStart.setHours(start.getHours(), start.getMinutes(), 0, 0)
+  const normalizedStart = normalizeAuctionTime(auctionStart)
   const normalizedEnd = new Date(normalizedStart.getTime() + 3 * 60 * 60 * 1000)
-  return Math.max(0, Math.floor((normalizedEnd.getTime() - now.getTime()) / 1000))
+  return Math.max(0, Math.floor((normalizedEnd.getTime() - Date.now()) / 1000))
 }
 
 function formatCountdown(totalSeconds: number): string {

@@ -11,6 +11,8 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'year-desc', label: 'Year: Newest' },
   { value: 'year-asc', label: 'Year: Oldest' },
   { value: 'mileage-asc', label: 'Mileage: Lowest' },
+  { value: 'auction-asc', label: 'Auction: Ending Soonest' },
+  { value: 'auction-desc', label: 'Auction: Ending Latest' },
 ]
 
 export function InventoryPage() {

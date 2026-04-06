@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import type { Vehicle } from '../types/vehicle'
-import { formatOdometer, getAuctionStatus, abbrevProvince } from '../lib/format'
+import { formatOdometer, getAuctionStatus, getCountdownLabel, abbrevProvince, normalizeAuctionTime } from '../lib/format'
 import { useBidContext } from '../context/BidContext'
 import { useWatchlist } from '../context/WatchlistContext'
 import { useCompare } from '../context/CompareContext'
@@ -38,6 +39,38 @@ export function VehicleCard({ vehicle }: Props) {
   const watched = isWatched(vehicle.id)
   const inCompare = isInCompare(vehicle.id)
 
+  // Live countdown for cards
+  const [liveLabel, setLiveLabel] = useState(() => {
+    if (status !== 'live') return ''
+    const nStart = normalizeAuctionTime(vehicle.auction_start)
+    const nEnd = new Date(nStart.getTime() + 3 * 3_600_000)
+    const rem = Math.max(0, nEnd.getTime() - Date.now())
+    const h = Math.floor(rem / 3_600_000)
+    const m = Math.floor((rem % 3_600_000) / 60_000)
+    const s = Math.floor((rem % 60_000) / 1000)
+    return h > 0
+      ? `${h}h ${String(m).padStart(2, '0')}m`
+      : `${m}m ${String(s).padStart(2, '0')}s`
+  })
+
+  useEffect(() => {
+    if (status !== 'live') return
+    const id = setInterval(() => {
+      const nStart = normalizeAuctionTime(vehicle.auction_start)
+      const nEnd = new Date(nStart.getTime() + 3 * 3_600_000)
+      const rem = Math.max(0, nEnd.getTime() - Date.now())
+      const h = Math.floor(rem / 3_600_000)
+      const m = Math.floor((rem % 3_600_000) / 60_000)
+      const s = Math.floor((rem % 60_000) / 1000)
+      setLiveLabel(
+        h > 0
+          ? `${h}h ${String(m).padStart(2, '0')}m`
+          : `${m}m ${String(s).padStart(2, '0')}s`
+      )
+    }, 1000)
+    return () => clearInterval(id)
+  }, [status, vehicle.auction_start])
+
   const gradeColor =
     vehicle.condition_grade >= 4
       ? 'text-green-700 bg-green-50 ring-1 ring-green-200'
@@ -63,7 +96,7 @@ export function VehicleCard({ vehicle }: Props) {
         <span
           className={`absolute top-2 left-2 text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_STYLES[status]}`}
         >
-          {STATUS_LABELS[status]}
+          {status === 'live' ? `● Live · ${liveLabel}` : STATUS_LABELS[status]}
         </span>
         {vehicle.buy_now_price && (
           <span className="absolute top-2 right-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-800">

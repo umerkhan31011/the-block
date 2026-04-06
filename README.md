@@ -26,7 +26,7 @@ npm run preview    # preview production build
 
 **Skipped:** authentication, seller workflows, checkout/payments, backend API, database. A frontend-only prototype is appropriate for the timebox and the challenge explicitly permits it.
 
-**Simplified:** auction timestamps are normalised to today's date (hour only) so the app always shows a realistic mix of Live / Upcoming / Ended auctions regardless of when you open it.
+**Simplified:** auction timestamps are normalised relative to page load so the app always shows a realistic mix of Live / Upcoming / Ended auctions regardless of when you open it.
 
 ## Stack
 
@@ -42,16 +42,16 @@ A fully responsive buyer-side auction interface with:
 
 - **Inventory browse** — 200 vehicles in a paginated grid (20/page)
 - **Search** — full-text match across make, model, year, trim, VIN, lot, city
-- **Filters** — make, body style, fuel type, transmission, title status, year range, price range; all as chip toggles with "clear all"
-- **Sort** — price low/high, year newest/oldest, mileage
+- **Filters** — listing type (All / Buy Now / Auction Only), make, body style, fuel type, transmission, title status, year range, currency-aware price range; all as chip toggles with "clear all"
+- **Sort** — price low/high, year newest/oldest, mileage, auction ending soonest/latest
 - **Vehicle detail page** — image gallery with thumbnails, full specs, condition grade + damage notes, title status badge, dealership info
 - **Currency toggle** — switch all prices between CAD and USD via a header toggle; managed globally through `CurrencyContext`
 - **Bid flow** — validated bid form (must exceed current high bid by min $100), accepts any whole-dollar amount, bid history, "You're the highest bidder" banner, reserve met/not met indicator
 - **Buy Now flow** — confirmation modal for vehicles with a `buy_now_price`; purchase recorded to `localStorage`, bid form hidden after purchase
 - **Watchlist** — save/unsave vehicles via heart icon on cards and detail page; persisted to `localStorage`; dedicated `/watchlist` page with counter badge in the header
 - **Comparison view** — select 2–3 vehicles with checkboxes, sticky bottom bar shows selections, full side-by-side spec table at `/compare` with differing values highlighted
-- **Live auction countdown** — real-time hh mm ss ticker on the detail page for "Live" auctions with a pulsing green indicator
-- **Auction status** — Live / Upcoming / Ended badges (auction hours normalised to today for a realistic spread)
+- **Live auction countdown** — real-time hh mm ss ticker on both the detail page and inventory cards for "Live" auctions with a pulsing green indicator
+- **Auction status** — Live / Upcoming / Ended badges with live countdown on cards (auction hours normalised to today for a realistic spread)
 - **Persistence** — all bids and purchases stored in `localStorage` and survive page refresh
 - **Mobile-responsive** — fluid grid, slide-out filter drawer on mobile
 
